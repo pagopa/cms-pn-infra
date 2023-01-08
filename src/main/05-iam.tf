@@ -196,3 +196,72 @@ resource "aws_iam_role_policy_attachment" "deploy_website" {
   role       = aws_iam_role.deploy_website.name
   policy_arn = aws_iam_policy.publish_s3.arn
 }
+
+
+# Rds stop and start
+
+resource "aws_iam_role" "lambdastopstartrds" {
+  name = "LambdaStopStartRds"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "rdsstopstart" {
+  name        = "RdsStopStart"
+  path        = "/"
+  description = "Policy that allows to stop and start RSD"
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "rds:DescribeDBClusterParameters",
+          "rds:StartDBCluster",
+          "rds:StopDBCluster",
+          "rds:DescribeDBEngineVersions",
+          "rds:DescribeGlobalClusters",
+          "rds:DescribePendingMaintenanceActions",
+          "rds:DescribeDBLogFiles",
+          "rds:StopDBInstance",
+          "rds:StartDBInstance",
+          "rds:DescribeReservedDBInstancesOfferings",
+          "rds:DescribeReservedDBInstances",
+          "rds:ListTagsForResource",
+          "rds:DescribeValidDBInstanceModifications",
+          "rds:DescribeDBInstances",
+          "rds:DescribeSourceRegions",
+          "rds:DescribeDBClusterEndpoints",
+          "rds:DescribeDBClusters",
+          "rds:DescribeDBClusterParameterGroups",
+          "rds:DescribeOptionGroups"
+        ]
+        Effect = "Allow"
+        Resource = [
+          module.aurora_postgresql.cluster_arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambdastopstartrds" {
+  role       = aws_iam_role.lambdastopstartrds.name
+  policy_arn = aws_iam_policy.rdsstopstart.arn
+}

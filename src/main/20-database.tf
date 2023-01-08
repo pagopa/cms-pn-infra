@@ -56,4 +56,10 @@ module "aurora_postgresql" {
   instances = {
     one = {}
   }
+
+  tags = {
+    AutoShutDown = true
+  }
 }
+
+
